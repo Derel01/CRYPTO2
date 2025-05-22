@@ -1,0 +1,9 @@
+fastapi==0.104.1
+uvicorn==0.23.2
+python-dotenv==1.0.0
+sqlalchemy==2.0.23
+psycopg2-binary==2.9.9  # Для PostgreSQL
+pymongo==4.6.1  # Оставим для совместимости
+motor==3.3.1  # Оставим для совместимости
+pydantic==2.4.2
+python-multipart==0.0.6
