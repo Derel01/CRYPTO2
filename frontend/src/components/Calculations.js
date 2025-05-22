@@ -67,73 +67,117 @@ const Calculations = () => {
       ) : (
         <>
           <div className="bg-white rounded-lg shadow-md p-4 mb-6">
-            <h2 className="text-xl font-bold mb-4">Общее количество лотов: {totalLots.toLocaleString(undefined, { maximumFractionDigits: 2 })}</h2>
+            <h2 className="text-xl font-bold mb-4">Общее количество лотов: {totalLots.toLocaleString(undefined)}</h2>
           </div>
           
-          <div className="bg-white rounded-lg shadow-md overflow-hidden">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Команда</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Токены RUB</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Токены USDT</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Лоты RUB</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Лоты USDT</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Всего лотов</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Действия</th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {summaries.map((summary) => (
-                  <tr key={summary.team_id}>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm font-medium text-gray-900">{summary.team_name}</div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">
-                        {summary.rub_tokens.toLocaleString('ru-RU')} ₽
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">
-                        {summary.usdt_tokens.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">
-                        {summary.rub_lots.toLocaleString(undefined, { maximumFractionDigits: 2 })}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">
-                        {summary.usdt_lots.toLocaleString(undefined, { maximumFractionDigits: 2 })}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm font-medium text-gray-900">
-                        {summary.total_lots.toLocaleString(undefined, { maximumFractionDigits: 2 })}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                      <Link to={`/teams/${summary.team_id}`} className="text-blue-600 hover:text-blue-900">
-                        Детали
-                      </Link>
-                    </td>
+          <div className="bg-white rounded-lg shadow-md overflow-hidden mb-6">
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Команда</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Токены RUB</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Токены USDT</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Лоты RUB</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Лоты USDT</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Всего лотов</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Остаток RUB</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Остаток USDT</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Нужно для лота RUB</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Нужно для лота USDT</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Действия</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {summaries.map((summary) => (
+                    <tr key={summary.team_id}>
+                      <td className="px-4 py-4 whitespace-nowrap">
+                        <div className="text-sm font-medium text-gray-900">{summary.team_name}</div>
+                      </td>
+                      <td className="px-4 py-4 whitespace-nowrap">
+                        <div className="text-sm text-gray-900">
+                          {summary.rub_tokens.toLocaleString('ru-RU')} ₽
+                        </div>
+                      </td>
+                      <td className="px-4 py-4 whitespace-nowrap">
+                        <div className="text-sm text-gray-900">
+                          {summary.usdt_tokens.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}
+                        </div>
+                      </td>
+                      <td className="px-4 py-4 whitespace-nowrap">
+                        <div className="text-sm text-gray-900">
+                          {summary.rub_lots.toLocaleString()} 
+                          <span className="text-xs text-gray-500 ml-1">
+                            ({summary.rub_lots_raw.toLocaleString(undefined, { maximumFractionDigits: 2 })})
+                          </span>
+                        </div>
+                      </td>
+                      <td className="px-4 py-4 whitespace-nowrap">
+                        <div className="text-sm text-gray-900">
+                          {summary.usdt_lots.toLocaleString()}
+                          <span className="text-xs text-gray-500 ml-1">
+                            ({summary.usdt_lots_raw.toLocaleString(undefined, { maximumFractionDigits: 2 })})
+                          </span>
+                        </div>
+                      </td>
+                      <td className="px-4 py-4 whitespace-nowrap">
+                        <div className="text-sm font-medium text-gray-900">
+                          {summary.total_lots.toLocaleString()}
+                        </div>
+                      </td>
+                      <td className="px-4 py-4 whitespace-nowrap">
+                        <div className="text-sm text-gray-900">
+                          {summary.rub_remainder.toLocaleString('ru-RU')} ₽
+                        </div>
+                      </td>
+                      <td className="px-4 py-4 whitespace-nowrap">
+                        <div className="text-sm text-gray-900">
+                          {summary.usdt_remainder.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}
+                        </div>
+                      </td>
+                      <td className="px-4 py-4 whitespace-nowrap">
+                        <div className="text-sm text-gray-900">
+                          {summary.rub_needed_for_next_lot.toLocaleString('ru-RU')} ₽
+                        </div>
+                      </td>
+                      <td className="px-4 py-4 whitespace-nowrap">
+                        <div className="text-sm text-gray-900">
+                          {summary.usdt_needed_for_next_lot.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}
+                        </div>
+                      </td>
+                      <td className="px-4 py-4 whitespace-nowrap text-sm font-medium">
+                        <Link to={`/teams/${summary.team_id}`} className="text-blue-600 hover:text-blue-900">
+                          Детали
+                        </Link>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
           
-          <div className="mt-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
-            <h3 className="font-semibold mb-2">Формула расчета:</h3>
-            <ul className="list-disc ml-6 text-sm text-gray-700">
-              <li className="mb-1">Токены RUB = Сумма (количество токенов × курс) для всех хэшей RUB</li>
-              <li className="mb-1">Токены USDT = Сумма количества токенов для всех хэшей USDT</li>
-              <li className="mb-1">Лоты RUB = Токены RUB ÷ Цена за лот RUB</li>
-              <li className="mb-1">Лоты USDT = Токены USDT ÷ Цена за лот USDT</li>
-              <li>Всего лотов = Лоты RUB + Лоты USDT</li>
-            </ul>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+            <div className="bg-gray-50 rounded-lg border border-gray-200 p-4">
+              <h3 className="font-semibold mb-2">Формула расчета:</h3>
+              <ul className="list-disc ml-6 text-sm text-gray-700">
+                <li className="mb-1">Токены RUB = Сумма (количество токенов × курс) для всех хэшей RUB</li>
+                <li className="mb-1">Токены USDT = Сумма количества токенов для всех хэшей USDT</li>
+                <li className="mb-1">Лоты RUB = Целая часть (Токены RUB ÷ Цена за лот RUB)</li>
+                <li className="mb-1">Лоты USDT = Целая часть (Токены USDT ÷ Цена за лот USDT)</li>
+                <li>Всего лотов = Лоты RUB + Лоты USDT</li>
+              </ul>
+            </div>
+            
+            <div className="bg-gray-50 rounded-lg border border-gray-200 p-4">
+              <h3 className="font-semibold mb-2">Пояснения к остаткам и расчетам:</h3>
+              <ul className="list-disc ml-6 text-sm text-gray-700">
+                <li className="mb-1">Остаток = Токены - (Лоты × Цена за лот)</li>
+                <li className="mb-1">Нужно для лота = Цена за лот - Остаток (если остаток > 0)</li>
+                <li className="mb-1">В скобках после лотов показано точное значение до округления</li>
+                <li>Все лоты округляются в меньшую сторону до целого числа</li>
+              </ul>
+            </div>
           </div>
         </>
       )}
