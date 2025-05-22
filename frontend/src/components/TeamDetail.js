@@ -137,16 +137,31 @@ const TeamDetail = () => {
               <div className="bg-blue-50 p-4 rounded">
                 <h3 className="font-medium text-blue-800 mb-2">RUB</h3>
                 <p className="mb-1">Токены: {summary.rub_tokens.toLocaleString('ru-RU')} ₽</p>
-                <p>Лоты: {summary.rub_lots.toLocaleString('ru-RU', { maximumFractionDigits: 2 })}</p>
+                <p className="mb-1">
+                  Лоты: {summary.rub_lots.toLocaleString()} 
+                  <span className="text-xs text-gray-500 ml-1">
+                    ({summary.rub_lots_raw.toLocaleString(undefined, { maximumFractionDigits: 2 })})
+                  </span>
+                </p>
+                <p className="mb-1">Остаток: {summary.rub_remainder.toLocaleString('ru-RU')} ₽</p>
+                <p>Нужно для след. лота: {summary.rub_needed_for_next_lot.toLocaleString('ru-RU')} ₽</p>
               </div>
               <div className="bg-green-50 p-4 rounded">
                 <h3 className="font-medium text-green-800 mb-2">USDT</h3>
                 <p className="mb-1">Токены: {summary.usdt_tokens.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}</p>
-                <p>Лоты: {summary.usdt_lots.toLocaleString('en-US', { maximumFractionDigits: 2 })}</p>
+                <p className="mb-1">
+                  Лоты: {summary.usdt_lots.toLocaleString()} 
+                  <span className="text-xs text-gray-500 ml-1">
+                    ({summary.usdt_lots_raw.toLocaleString(undefined, { maximumFractionDigits: 2 })})
+                  </span>
+                </p>
+                <p className="mb-1">Остаток: {summary.usdt_remainder.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}</p>
+                <p>Нужно для след. лота: {summary.usdt_needed_for_next_lot.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}</p>
               </div>
             </div>
             <div className="mt-4 bg-gray-100 p-4 rounded">
-              <p className="font-bold">Общее количество лотов: {summary.total_lots.toLocaleString(undefined, { maximumFractionDigits: 2 })}</p>
+              <p className="font-bold">Общее количество лотов: {summary.total_lots.toLocaleString()}</p>
+              <p className="text-xs text-gray-600 mt-1">Лоты округляются в меньшую сторону до целого числа</p>
             </div>
           </div>
         )}
