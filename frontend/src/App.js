@@ -1,51 +1,45 @@
-import { useEffect } from "react";
+import React, { useState } from "react";
+import { BrowserRouter, Routes, Route, Link, useNavigate } from "react-router-dom";
 import "./App.css";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import axios from "axios";
 
-const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
-const API = `${BACKEND_URL}/api`;
-
-const Home = () => {
-  const helloWorldApi = async () => {
-    try {
-      const response = await axios.get(`${API}/`);
-      console.log(response.data.message);
-    } catch (e) {
-      console.error(e, `errored out requesting / api`);
-    }
-  };
-
-  useEffect(() => {
-    helloWorldApi();
-  }, []);
-
-  return (
-    <div>
-      <header className="App-header">
-        <a
-          className="App-link"
-          href="https://emergent.sh"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <img src="https://avatars.githubusercontent.com/in/1201222?s=120&u=2686cf91179bbafbc7a71bfbc43004cf9ae1acea&v=4" />
-        </a>
-        <p className="mt-5">Building something incredible ~!</p>
-      </header>
-    </div>
-  );
-};
+// Components
+import Teams from "./components/Teams";
+import TeamDetail from "./components/TeamDetail";
+import Calculations from "./components/Calculations";
+import TeamForm from "./components/TeamForm";
+import HashForm from "./components/HashForm";
 
 function App() {
   return (
-    <div className="App">
+    <div className="min-h-screen bg-gray-100">
       <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Home />}>
-            <Route index element={<Home />} />
-          </Route>
-        </Routes>
+        <header className="bg-blue-600 text-white shadow-md">
+          <nav className="container mx-auto px-4 py-4 flex justify-between items-center">
+            <Link to="/" className="text-2xl font-bold">Финансовое Крипто Приложение</Link>
+            <div className="space-x-4">
+              <Link to="/" className="hover:underline">Команды</Link>
+              <Link to="/calculations" className="hover:underline">Расчеты</Link>
+            </div>
+          </nav>
+        </header>
+
+        <main className="container mx-auto px-4 py-8">
+          <Routes>
+            <Route path="/" element={<Teams />} />
+            <Route path="/teams/new" element={<TeamForm />} />
+            <Route path="/teams/:id" element={<TeamDetail />} />
+            <Route path="/teams/:id/edit" element={<TeamForm />} />
+            <Route path="/teams/:teamId/hashes/new" element={<HashForm />} />
+            <Route path="/hashes/:id/edit" element={<HashForm />} />
+            <Route path="/calculations" element={<Calculations />} />
+          </Routes>
+        </main>
+
+        <footer className="bg-gray-800 text-white py-4">
+          <div className="container mx-auto px-4 text-center">
+            <p>&copy; 2024 Финансовое Крипто Приложение</p>
+          </div>
+        </footer>
       </BrowserRouter>
     </div>
   );
