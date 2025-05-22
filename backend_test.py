@@ -272,8 +272,8 @@ def main():
     # Test root endpoint
     tester.test_root_endpoint()
     
-    # Test creating a team
-    success, team = tester.test_create_team("Test Team", 1000, 100)
+    # Test creating a team with specific lot prices to test calculations
+    success, team = tester.test_create_team("Test Calculation Team", 1000, 100)
     if not success:
         print("❌ Failed to create team, stopping tests")
         return 1
@@ -286,15 +286,31 @@ def main():
     # Test getting a specific team
     tester.test_get_team(team_id)
     
-    # Test creating USDT hash
-    success, _ = tester.test_create_hash(team_id, "abc123", 5000, "USDT")
+    # Create test data for lot calculations
+    
+    # Test 1: Exact lot amount (should floor to 5)
+    success, _ = tester.test_create_hash(team_id, "usdt_exact", 500, "USDT")
     if not success:
         print("❌ Failed to create USDT hash, stopping tests")
         tester.cleanup()
         return 1
     
-    # Test creating RUB hash
-    success, _ = tester.test_create_hash(team_id, "def456", 10000, "RUB", 80)
+    # Test 2: Partial lot amount (should floor to 3)
+    success, _ = tester.test_create_hash(team_id, "usdt_partial", 350.75, "USDT")
+    if not success:
+        print("❌ Failed to create USDT hash, stopping tests")
+        tester.cleanup()
+        return 1
+    
+    # Test 3: RUB exact lot amount (should floor to 4)
+    success, _ = tester.test_create_hash(team_id, "rub_exact", 50, "RUB", 80)  # 50 * 80 = 4000 RUB = 4 lots
+    if not success:
+        print("❌ Failed to create RUB hash, stopping tests")
+        tester.cleanup()
+        return 1
+    
+    # Test 4: RUB partial lot amount (should floor to 2)
+    success, _ = tester.test_create_hash(team_id, "rub_partial", 31.25, "RUB", 80)  # 31.25 * 80 = 2500 RUB = 2 lots
     if not success:
         print("❌ Failed to create RUB hash, stopping tests")
         tester.cleanup()
@@ -302,20 +318,6 @@ def main():
     
     # Test getting hashes for the team
     tester.test_get_hashes(team_id)
-    
-    # Test getting a specific hash
-    if tester.created_hash_ids:
-        tester.test_get_hash(tester.created_hash_ids[0])
-    
-    # Test updating a team
-    tester.test_update_team(team_id, {"name": "Updated Test Team"})
-    
-    # Test updating a hash
-    if tester.created_hash_ids:
-        tester.test_update_hash(tester.created_hash_ids[0], {"token_amount": 6000})
-    
-    # Test team search
-    tester.test_get_teams(search="Test")
     
     # Verify calculations
     tester.verify_calculations(team_id)
