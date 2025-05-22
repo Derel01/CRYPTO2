@@ -190,11 +190,70 @@ class CryptoFinancialAppTester:
         print("\n🧮 Verifying calculations:")
         print(f"USDT tokens: {summary['usdt_tokens']}")
         print(f"RUB tokens: {summary['rub_tokens']}")
-        print(f"USDT lots: {summary['usdt_lots']}")
-        print(f"RUB lots: {summary['rub_lots']}")
+        print(f"USDT lots raw: {summary['usdt_lots_raw']}")
+        print(f"RUB lots raw: {summary['rub_lots_raw']}")
+        print(f"USDT lots (floored): {summary['usdt_lots']}")
+        print(f"RUB lots (floored): {summary['rub_lots']}")
         print(f"Total lots: {summary['total_lots']}")
+        print(f"RUB remainder: {summary['rub_remainder']}")
+        print(f"USDT remainder: {summary['usdt_remainder']}")
+        print(f"RUB needed for next lot: {summary['rub_needed_for_next_lot']}")
+        print(f"USDT needed for next lot: {summary['usdt_needed_for_next_lot']}")
         
-        return True
+        # Verify calculations
+        success = True
+        
+        # Get team details to verify calculations
+        _, team = self.test_get_team(team_id)
+        
+        # Verify RUB lots calculation (should be floored)
+        expected_rub_lots_raw = summary['rub_tokens'] / team['rub_price_per_lot'] if team['rub_price_per_lot'] > 0 else 0
+        expected_rub_lots = int(expected_rub_lots_raw)  # floor to integer
+        if summary['rub_lots'] != expected_rub_lots:
+            print(f"❌ RUB lots calculation incorrect. Expected: {expected_rub_lots}, Got: {summary['rub_lots']}")
+            success = False
+        
+        # Verify USDT lots calculation (should be floored)
+        expected_usdt_lots_raw = summary['usdt_tokens'] / team['usdt_price_per_lot'] if team['usdt_price_per_lot'] > 0 else 0
+        expected_usdt_lots = int(expected_usdt_lots_raw)  # floor to integer
+        if summary['usdt_lots'] != expected_usdt_lots:
+            print(f"❌ USDT lots calculation incorrect. Expected: {expected_usdt_lots}, Got: {summary['usdt_lots']}")
+            success = False
+        
+        # Verify total lots
+        expected_total_lots = expected_rub_lots + expected_usdt_lots
+        if summary['total_lots'] != expected_total_lots:
+            print(f"❌ Total lots calculation incorrect. Expected: {expected_total_lots}, Got: {summary['total_lots']}")
+            success = False
+        
+        # Verify RUB remainder
+        expected_rub_remainder = summary['rub_tokens'] - (summary['rub_lots'] * team['rub_price_per_lot'])
+        if abs(summary['rub_remainder'] - expected_rub_remainder) > 0.01:  # Allow small floating point differences
+            print(f"❌ RUB remainder calculation incorrect. Expected: {expected_rub_remainder}, Got: {summary['rub_remainder']}")
+            success = False
+        
+        # Verify USDT remainder
+        expected_usdt_remainder = summary['usdt_tokens'] - (summary['usdt_lots'] * team['usdt_price_per_lot'])
+        if abs(summary['usdt_remainder'] - expected_usdt_remainder) > 0.01:  # Allow small floating point differences
+            print(f"❌ USDT remainder calculation incorrect. Expected: {expected_usdt_remainder}, Got: {summary['usdt_remainder']}")
+            success = False
+        
+        # Verify RUB needed for next lot
+        expected_rub_needed = team['rub_price_per_lot'] - expected_rub_remainder if expected_rub_remainder > 0 else team['rub_price_per_lot']
+        if abs(summary['rub_needed_for_next_lot'] - expected_rub_needed) > 0.01:  # Allow small floating point differences
+            print(f"❌ RUB needed for next lot calculation incorrect. Expected: {expected_rub_needed}, Got: {summary['rub_needed_for_next_lot']}")
+            success = False
+        
+        # Verify USDT needed for next lot
+        expected_usdt_needed = team['usdt_price_per_lot'] - expected_usdt_remainder if expected_usdt_remainder > 0 else team['usdt_price_per_lot']
+        if abs(summary['usdt_needed_for_next_lot'] - expected_usdt_needed) > 0.01:  # Allow small floating point differences
+            print(f"❌ USDT needed for next lot calculation incorrect. Expected: {expected_usdt_needed}, Got: {summary['usdt_needed_for_next_lot']}")
+            success = False
+        
+        if success:
+            print("✅ All calculations verified correctly!")
+        
+        return success
 
     def cleanup(self):
         """Clean up created resources"""
