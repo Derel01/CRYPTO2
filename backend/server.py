@@ -18,7 +18,7 @@ load_dotenv(ROOT_DIR / '.env')
 # MongoDB connection
 mongo_url = os.environ['MONGO_URL']
 client = AsyncIOMotorClient(mongo_url)
-db = client[os.environ['DB_NAME']]
+db = client[os.environ.get('DB_NAME', 'crypto_finance_app')]
 
 # Create the main app without a prefix
 app = FastAPI()
@@ -108,6 +108,101 @@ async def get_teams(search: Optional[str] = None):
     
     teams = await db.teams.find(query).to_list(1000)
     return [Team(**team) for team in teams]
+
+
+# Summary and Calculation Endpoints
+# Important: Define these routes BEFORE the /teams/{team_id} route
+# to avoid FastAPI confusing 'summary' with a team_id
+@api_router.get("/teams/summary", response_model=List[TeamSummary])
+async def get_team_summaries():
+    # Get all teams
+    teams = await db.teams.find().to_list(1000)
+    
+    summaries = []
+    for team in teams:
+        team_obj = Team(**team)
+        
+        # Get all hashes for this team
+        hashes = await db.crypto_hashes.find({"team_id": team_obj.id}).to_list(1000)
+        
+        # Initialize counters
+        rub_tokens = 0.0
+        usdt_tokens = 0.0
+        
+        # Calculate token totals
+        for hash_ in hashes:
+            hash_obj = CryptoHash(**hash_)
+            if hash_obj.currency == Currency.RUB:
+                # For RUB, multiply by exchange rate
+                rub_tokens += hash_obj.token_amount * (hash_obj.exchange_rate or 0)
+            else:
+                # For USDT, just add the token amount
+                usdt_tokens += hash_obj.token_amount
+        
+        # Calculate lots
+        rub_lots = rub_tokens / team_obj.rub_price_per_lot if team_obj.rub_price_per_lot > 0 else 0
+        usdt_lots = usdt_tokens / team_obj.usdt_price_per_lot if team_obj.usdt_price_per_lot > 0 else 0
+        total_lots = rub_lots + usdt_lots
+        
+        # Create summary object
+        summary = TeamSummary(
+            team_id=team_obj.id,
+            team_name=team_obj.name,
+            rub_tokens=rub_tokens,
+            usdt_tokens=usdt_tokens,
+            rub_lots=rub_lots,
+            usdt_lots=usdt_lots,
+            total_lots=total_lots
+        )
+        
+        summaries.append(summary)
+    
+    return summaries
+
+
+@api_router.get("/teams/{team_id}/summary", response_model=TeamSummary)
+async def get_team_summary(team_id: str):
+    # Get team
+    team = await db.teams.find_one({"id": team_id})
+    if not team:
+        raise HTTPException(status_code=404, detail="Team not found")
+    
+    team_obj = Team(**team)
+    
+    # Get all hashes for this team
+    hashes = await db.crypto_hashes.find({"team_id": team_id}).to_list(1000)
+    
+    # Initialize counters
+    rub_tokens = 0.0
+    usdt_tokens = 0.0
+    
+    # Calculate token totals
+    for hash_ in hashes:
+        hash_obj = CryptoHash(**hash_)
+        if hash_obj.currency == Currency.RUB:
+            # For RUB, multiply by exchange rate
+            rub_tokens += hash_obj.token_amount * (hash_obj.exchange_rate or 0)
+        else:
+            # For USDT, just add the token amount
+            usdt_tokens += hash_obj.token_amount
+    
+    # Calculate lots
+    rub_lots = rub_tokens / team_obj.rub_price_per_lot if team_obj.rub_price_per_lot > 0 else 0
+    usdt_lots = usdt_tokens / team_obj.usdt_price_per_lot if team_obj.usdt_price_per_lot > 0 else 0
+    total_lots = rub_lots + usdt_lots
+    
+    # Create summary object
+    summary = TeamSummary(
+        team_id=team_obj.id,
+        team_name=team_obj.name,
+        rub_tokens=rub_tokens,
+        usdt_tokens=usdt_tokens,
+        rub_lots=rub_lots,
+        usdt_lots=usdt_lots,
+        total_lots=total_lots
+    )
+    
+    return summary
 
 
 @api_router.get("/teams/{team_id}", response_model=Team)
@@ -210,99 +305,6 @@ async def delete_hash(hash_id: str):
     
     await db.crypto_hashes.delete_one({"id": hash_id})
     return {"message": "Hash deleted successfully"}
-
-
-# Summary and Calculation Endpoints
-@api_router.get("/teams/summary", response_model=List[TeamSummary])
-async def get_team_summaries():
-    # Get all teams
-    teams = await db.teams.find().to_list(1000)
-    
-    summaries = []
-    for team in teams:
-        team_obj = Team(**team)
-        
-        # Get all hashes for this team
-        hashes = await db.crypto_hashes.find({"team_id": team_obj.id}).to_list(1000)
-        
-        # Initialize counters
-        rub_tokens = 0.0
-        usdt_tokens = 0.0
-        
-        # Calculate token totals
-        for hash_ in hashes:
-            hash_obj = CryptoHash(**hash_)
-            if hash_obj.currency == Currency.RUB:
-                # For RUB, multiply by exchange rate
-                rub_tokens += hash_obj.token_amount * (hash_obj.exchange_rate or 0)
-            else:
-                # For USDT, just add the token amount
-                usdt_tokens += hash_obj.token_amount
-        
-        # Calculate lots
-        rub_lots = rub_tokens / team_obj.rub_price_per_lot if team_obj.rub_price_per_lot > 0 else 0
-        usdt_lots = usdt_tokens / team_obj.usdt_price_per_lot if team_obj.usdt_price_per_lot > 0 else 0
-        total_lots = rub_lots + usdt_lots
-        
-        # Create summary object
-        summary = TeamSummary(
-            team_id=team_obj.id,
-            team_name=team_obj.name,
-            rub_tokens=rub_tokens,
-            usdt_tokens=usdt_tokens,
-            rub_lots=rub_lots,
-            usdt_lots=usdt_lots,
-            total_lots=total_lots
-        )
-        
-        summaries.append(summary)
-    
-    return summaries
-
-
-@api_router.get("/teams/{team_id}/summary", response_model=TeamSummary)
-async def get_team_summary(team_id: str):
-    # Get team
-    team = await db.teams.find_one({"id": team_id})
-    if not team:
-        raise HTTPException(status_code=404, detail="Team not found")
-    
-    team_obj = Team(**team)
-    
-    # Get all hashes for this team
-    hashes = await db.crypto_hashes.find({"team_id": team_id}).to_list(1000)
-    
-    # Initialize counters
-    rub_tokens = 0.0
-    usdt_tokens = 0.0
-    
-    # Calculate token totals
-    for hash_ in hashes:
-        hash_obj = CryptoHash(**hash_)
-        if hash_obj.currency == Currency.RUB:
-            # For RUB, multiply by exchange rate
-            rub_tokens += hash_obj.token_amount * (hash_obj.exchange_rate or 0)
-        else:
-            # For USDT, just add the token amount
-            usdt_tokens += hash_obj.token_amount
-    
-    # Calculate lots
-    rub_lots = rub_tokens / team_obj.rub_price_per_lot if team_obj.rub_price_per_lot > 0 else 0
-    usdt_lots = usdt_tokens / team_obj.usdt_price_per_lot if team_obj.usdt_price_per_lot > 0 else 0
-    total_lots = rub_lots + usdt_lots
-    
-    # Create summary object
-    summary = TeamSummary(
-        team_id=team_obj.id,
-        team_name=team_obj.name,
-        rub_tokens=rub_tokens,
-        usdt_tokens=usdt_tokens,
-        rub_lots=rub_lots,
-        usdt_lots=usdt_lots,
-        total_lots=total_lots
-    )
-    
-    return summary
 
 
 # Root API endpoint
