@@ -4,6 +4,7 @@ from starlette.middleware.cors import CORSMiddleware
 from motor.motor_asyncio import AsyncIOMotorClient
 import os
 import logging
+import math
 from pathlib import Path
 from pydantic import BaseModel, Field
 from typing import List, Optional
@@ -86,9 +87,15 @@ class TeamSummary(BaseModel):
     team_name: str
     rub_tokens: float
     usdt_tokens: float
-    rub_lots: float
-    usdt_lots: float
-    total_lots: float
+    rub_lots_raw: float  # Точное количество лотов
+    usdt_lots_raw: float  # Точное количество лотов
+    rub_lots: int  # Округлено в меньшую сторону
+    usdt_lots: int  # Округлено в меньшую сторону
+    total_lots: int  # Сумма округленных лотов
+    rub_remainder: float  # Остаток RUB
+    usdt_remainder: float  # Остаток USDT
+    rub_needed_for_next_lot: float  # Сколько RUB нужно для следующего лота
+    usdt_needed_for_next_lot: float  # Сколько USDT нужно для следующего лота
 
 
 # API Endpoints for Teams
@@ -139,10 +146,22 @@ async def get_team_summaries():
                 # For USDT, just add the token amount
                 usdt_tokens += hash_obj.token_amount
         
-        # Calculate lots
-        rub_lots = rub_tokens / team_obj.rub_price_per_lot if team_obj.rub_price_per_lot > 0 else 0
-        usdt_lots = usdt_tokens / team_obj.usdt_price_per_lot if team_obj.usdt_price_per_lot > 0 else 0
+        # Calculate raw lots (exact amount)
+        rub_lots_raw = rub_tokens / team_obj.rub_price_per_lot if team_obj.rub_price_per_lot > 0 else 0
+        usdt_lots_raw = usdt_tokens / team_obj.usdt_price_per_lot if team_obj.usdt_price_per_lot > 0 else 0
+        
+        # Floor the lots to get whole lots
+        rub_lots = math.floor(rub_lots_raw)
+        usdt_lots = math.floor(usdt_lots_raw)
         total_lots = rub_lots + usdt_lots
+        
+        # Calculate remainders
+        rub_remainder = rub_tokens - (rub_lots * team_obj.rub_price_per_lot)
+        usdt_remainder = usdt_tokens - (usdt_lots * team_obj.usdt_price_per_lot)
+        
+        # Calculate needed for next lot
+        rub_needed_for_next_lot = team_obj.rub_price_per_lot - rub_remainder if rub_remainder > 0 else team_obj.rub_price_per_lot
+        usdt_needed_for_next_lot = team_obj.usdt_price_per_lot - usdt_remainder if usdt_remainder > 0 else team_obj.usdt_price_per_lot
         
         # Create summary object
         summary = TeamSummary(
@@ -150,9 +169,15 @@ async def get_team_summaries():
             team_name=team_obj.name,
             rub_tokens=rub_tokens,
             usdt_tokens=usdt_tokens,
+            rub_lots_raw=rub_lots_raw,
+            usdt_lots_raw=usdt_lots_raw,
             rub_lots=rub_lots,
             usdt_lots=usdt_lots,
-            total_lots=total_lots
+            total_lots=total_lots,
+            rub_remainder=rub_remainder,
+            usdt_remainder=usdt_remainder,
+            rub_needed_for_next_lot=rub_needed_for_next_lot,
+            usdt_needed_for_next_lot=usdt_needed_for_next_lot
         )
         
         summaries.append(summary)
@@ -186,10 +211,22 @@ async def get_team_summary(team_id: str):
             # For USDT, just add the token amount
             usdt_tokens += hash_obj.token_amount
     
-    # Calculate lots
-    rub_lots = rub_tokens / team_obj.rub_price_per_lot if team_obj.rub_price_per_lot > 0 else 0
-    usdt_lots = usdt_tokens / team_obj.usdt_price_per_lot if team_obj.usdt_price_per_lot > 0 else 0
+    # Calculate raw lots (exact amount)
+    rub_lots_raw = rub_tokens / team_obj.rub_price_per_lot if team_obj.rub_price_per_lot > 0 else 0
+    usdt_lots_raw = usdt_tokens / team_obj.usdt_price_per_lot if team_obj.usdt_price_per_lot > 0 else 0
+    
+    # Floor the lots to get whole lots
+    rub_lots = math.floor(rub_lots_raw)
+    usdt_lots = math.floor(usdt_lots_raw)
     total_lots = rub_lots + usdt_lots
+    
+    # Calculate remainders
+    rub_remainder = rub_tokens - (rub_lots * team_obj.rub_price_per_lot)
+    usdt_remainder = usdt_tokens - (usdt_lots * team_obj.usdt_price_per_lot)
+    
+    # Calculate needed for next lot
+    rub_needed_for_next_lot = team_obj.rub_price_per_lot - rub_remainder if rub_remainder > 0 else team_obj.rub_price_per_lot
+    usdt_needed_for_next_lot = team_obj.usdt_price_per_lot - usdt_remainder if usdt_remainder > 0 else team_obj.usdt_price_per_lot
     
     # Create summary object
     summary = TeamSummary(
@@ -197,9 +234,15 @@ async def get_team_summary(team_id: str):
         team_name=team_obj.name,
         rub_tokens=rub_tokens,
         usdt_tokens=usdt_tokens,
+        rub_lots_raw=rub_lots_raw,
+        usdt_lots_raw=usdt_lots_raw,
         rub_lots=rub_lots,
         usdt_lots=usdt_lots,
-        total_lots=total_lots
+        total_lots=total_lots,
+        rub_remainder=rub_remainder,
+        usdt_remainder=usdt_remainder,
+        rub_needed_for_next_lot=rub_needed_for_next_lot,
+        usdt_needed_for_next_lot=usdt_needed_for_next_lot
     )
     
     return summary
